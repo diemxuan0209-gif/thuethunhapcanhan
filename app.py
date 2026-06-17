@@ -14,30 +14,47 @@ st.write("Cập nhật đầy đủ Lương, Thưởng, Tăng ca, Phụ cấp th
 
 st.markdown("---")
 
-# --- PHẦN NHẬP DỮ LIỆU ĐẦU VÀO (TIẾNG VIỆT) ---
+# --- PHẦN NHẬP DỮ LIỆU ĐẦU VÀO (THEO YÊU CẦU CỦA THẦY) ---
 st.subheader("📋 Nhập thông tin thu nhập tháng này của bạn")
 
-gross_salary = st.number_input("1. Lương chính / Lương Gross (VND):", min_value=0, value=30000000, step=500000, format="%d")
-bonus_pay = st.number_input("2. Tiền thưởng / Bonus (VND):", min_value=0, value=0, step=500000, format="%d")
-overtime_pay = st.number_input("3. Tiền lương tăng ca / làm thêm giờ (VND):", min_value=0, value=0, step=500000, format="%d")
+# 1. Đổi tên hiển thị theo ý Thầy Bình
+gross_salary = st.number_input(
+    "1. Lương đóng BHXH (VND):", 
+    min_value=0, value=30000000, step=500000, format="%d"
+)
+
+gross_bonus_pay = st.number_input(
+    "2. Tiền thưởng / Bonus (VND):", 
+    min_value=0, value=0, step=500000, format="%d"
+)
+
+overtime_pay = st.number_input(
+    "3. Tiền lương tăng ca / làm thêm giờ (VND):", 
+    min_value=0, value=0, step=500000, format="%d"
+)
 
 st.markdown("**4. Các khoản phụ cấp nhận bằng tiền mặt:**")
 col_sub1, col_sub2 = st.columns(2)
 with col_sub1:
-    lunch_allowance = st.number_input("Phụ cấp ăn trưa (VND):", min_value=0, value=730000, step=50000)
+    # Đổi giá trị mặc định (value) về 0 theo ý Thầy Bình
+    lunch_allowance = st.number_input("Phụ cấp ăn trưa (VND):", min_value=0, value=0, step=50000)
 with col_sub2:
-    other_allowance = st.number_input("Phụ cấp điện thoại, xăng xe (VND):", min_value=0, value=500000, step=50000)
+    # Đổi giá trị mặc định (value) về 0 theo ý Thầy Bình
+    other_allowance = st.number_input("Phụ cấp điện thoại, xăng xe (VND):", min_value=0, value=0, step=50000)
 
-dependents = st.number_input("5. Số người phụ thuộc bạn đang nuôi dưỡng (người):", min_value=0, value=1, step=1)
+dependents = st.number_input(
+    "5. Số người phụ thuộc bạn đang nuôi dưỡng (người):", 
+    min_value=0, value=1, step=1
+)
 
 st.markdown("---")
 
-# --- HÀM LOGIC TÍNH TOÁN (ĐỂ TRÁNH LỖI THỤT LỀ) ---
+# --- HÀM LOGIC TÍNH TOÁN AN TOÀN ---
 def tinh_thue_tncn(gross, bonus, overtime, lunch, other, deps):
     # Tổng thu nhập thực tế
     total_income = gross + bonus + overtime + lunch + other
     
-    # Bảo hiểm bắt buộc (10.5%)
+    # Bảo hiểm bắt buộc (10.5% tính trên Lương đóng BHXH)
     bhxh = gross * 0.08
     bhyt = gross * 0.015
     bhtn = gross * 0.01
@@ -56,7 +73,7 @@ def tinh_thue_tncn(gross, bonus, overtime, lunch, other, deps):
     # Tính thu nhập tính thuế cuối cùng
     assessable_income = max(0, total_income - total_exempt_income - total_insurance - total_reduction)
     
-    # Biểu thuế 5 bậc năm 2026
+    # Biểu thuế lũy tiến 5 bậc năm 2026
     tax = 0
     brackets = [
         {"limit": 10000000, "rate": 0.05, "desc": "Bậc 1: Đến 10 triệu đồng (5%)"},
@@ -100,15 +117,14 @@ def tinh_thue_tncn(gross, bonus, overtime, lunch, other, deps):
 
 # --- PHẦN NÚT BẤM KÍCH HOẠT VÀ HIỂN THỊ KẾT QUẢ ---
 if st.button("🧮 Tính Thuế & Nhận Kết Quả", type="primary"):
-    # Gọi hàm tính toán
-    res = tinh_thue_tncn(gross_salary, bonus_pay, overtime_pay, lunch_allowance, other_allowance, dependents)
+    res = tinh_thue_tncn(gross_salary, gross_bonus_pay, overtime_pay, lunch_allowance, other_allowance, dependents)
     
     st.markdown("---")
     st.subheader("🎯 Kết Quả Tính Toán Tóm Tắt")
     
     col1, col2 = st.columns(2)
     with col1:
-        st.metric(label="Tổng thu nhập nhận được (Gross + Thưởng + Phụ cấp)", value=f"{res['total_income']:,.0f} VND")
+        st.metric(label="Tổng thu nhập nhận được (Lương + Thưởng + Phụ cấp)", value=f"{res['total_income']:,.0f} VND")
         st.metric(label="Tổng bảo hiểm bắt buộc trừ vào lương (10.5%)", value=f"{res['total_insurance']:,.0f} VND")
     with col2:
         st.metric(label="Thuế TNCN phải nộp", value=f"{res['tax']:,.0f} VND")
