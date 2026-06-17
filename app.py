@@ -1,7 +1,11 @@
 import streamlit as st
 
 # Cấu hình trang web của ứng dụng
-st.set_page_config(page_title="App Tính Thuế TNCN Việt Nam", page_icon="💰", layout="centered")
+st.set_page_config(page_title="App Tính Thuế TNCN Việt Nam 2026", page_icon="💰", layout="centered")
+
+# --- CHÈN LOGO THEO FILE TRỰC TIẾP ---
+# Hệ thống sẽ tìm file tên là logo.jpg nằm cùng thư mục với file app.py trên GitHub của bạn
+st.image("logo.jpg")
 
 # --- THÔNG TIN THÀNH VIÊN VÀ ĐỀ TÀI ---
 st.markdown("### 📝 **Đề Tài 7_Nguyễn Trần Diễm Xuân**")
@@ -69,15 +73,11 @@ if st.button("🧮 Tính Thuế & Nhận Kết Quả", type="primary"):
     total_reduction = self_reduction + dependent_reduction
     
     # 3. Xử lý các khoản thu nhập được MIỄN THUẾ
-    # Tiền ăn trưa miễn tối đa 730k
     exempt_lunch = min(lunch_allowance, 730000)
-    # Tiền điện thoại/xăng xe phục vụ công việc tạm tính miễn thuế theo quy chế
     exempt_allowance = other_allowance 
-    # Tổng các khoản được miễn thuế (bao gồm cả tăng ca)
     total_exempt_income = overtime_pay + exempt_lunch + exempt_allowance
     
     # 4. Tính thu nhập tính thuế
-    # Thu nhập tính thuế = Tổng thu nhập - Thu nhập miễn thuế - Bảo hiểm - Giảm trừ gia cảnh
     assessable_income = max(0, total_income - total_exempt_income - total_insurance - total_reduction)
     
     # 5. Tính toán thuế lũy tiến 5 bậc năm 2026
@@ -115,37 +115,4 @@ if st.button("🧮 Tính Thuế & Nhận Kết Quả", type="primary"):
     # 6. Lương NET thực nhận cuối cùng mang về nhà
     net_salary = total_income - total_insurance - tax
 
-    # --- PHẦN HIỂN THỊ KẾT QUẢ ---
-    st.subheader("🎯 Kết Quả Tính Toán Tóm Tắt")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(label="Tổng thu nhập nhận được (Gross + Thưởng + Phụ cấp)", value=f"{total_income:,.0f} VND")
-        st.metric(label="Tổng bảo hiểm bắt buộc trừ vào lương (10.5%)", value=f"{total_insurance:,.0f} VND")
-    with col2:
-        st.metric(label="Thuế TNCN phải nộp", value=f"{tax:,.0f} VND")
-        st.metric(label="THỰC NHẬN VỀ TAY (NET)", value=f"{net_salary:,.0f} VND")
-
-    st.markdown("---")
-    st.subheader("📜 Giải Trình Chi Tiết Quy Trình Khấu Trừ (Năm 2026)")
-    
-    st.markdown(f"""
-    * **Tổng thu nhập phát sinh trong tháng:** `{total_income:,.0f} VND`
-    * **Các khoản được miễn trừ thuế:**
-        * Tiền lương tăng ca: `{overtime_pay:,.0f} VND`
-        * Tiền ăn trưa được miễn (Tối đa 730k): `{exempt_lunch:,.0f} VND`
-        * Phụ cấp công việc (xăng xe, điện thoại): `{exempt_allowance:,.0f} VND`
-    * **Các khoản phí bảo hiểm bắt buộc trích từ lương chính:**
-        * BHXH (8%): `{bhxh:,.0f} VND` | BHYT (1.5%): `{bhyt:,.0f} VND` | BHTN (1%): `{bhtn:,.0f} VND`
-        * **Tổng phí bảo hiểm:** `{total_insurance:,.0f} VND`
-    * **Giảm trừ gia cảnh công thần:**
-        * Giảm trừ bản thân người nộp: `15,500,000 VND`
-        * Giảm trừ người phụ thuộc: `{dependent_reduction:,.0f} VND` (cho {dependents} người)
-    * **Thu nhập tính thuế (đưa vào bảng lũy tiến):** `{assessable_income:,.0f} VND`
-    """)
-    
-    if tax > 0:
-        st.write("📊 **Chi tiết phân tách số tiền nộp theo biểu thuế 5 bậc mới (2026):**")
-        st.table(tax_breakdown)
-    else:
-        st.success("Tuyệt vời! Sau khi trừ các khoản phụ cấp miễn thuế và giảm trừ gia cảnh, bạn không cần phải nộp thuế TNCN trong tháng này.")
+    # --- PHẦN HIỂN TH
