@@ -8,7 +8,7 @@ st.set_page_config(page_title="App Tính Thuế TNCN Việt Nam 2026", page_icon
 st.image("logo.jpg")
 
 # --- THÔNG TIN THÀNH VIÊN VÀ ĐỀ TÀI ---
-st.markdown("### 📝 **Đề Tài 7_Nguyễn Trần Diễm Xuân**")
+st.markdown("### 📝 **Trường ĐẠI HỌC TÀI CHÍNH MARKETING_Đề Tài 7_Nguyễn Trần Diễm Xuân**")
 
 st.title("💰 Ứng Dụng Tính Thuế Thu Nhập Cá Nhân")
 st.write("Cập nhật đầy đủ Lương, Thưởng, Tăng ca, Phụ cấp theo luật thuế mới nhất năm 2026")
