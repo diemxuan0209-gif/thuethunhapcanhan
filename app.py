@@ -1,13 +1,13 @@
 import streamlit as st
 
 # Cấu hình trang web của ứng dụng
-st.set_page_config(page_title="Tính Thuế TNCN tại Việt Nam", page_icon="💰", layout="centered")
+st.set_page_config(page_title="Tính Thuế TNCN Việt Nam", page_icon="💰", layout="centered")
 
 # --- THÔNG TIN THÀNH VIÊN VÀ ĐỀ TÀI ---
 st.markdown("### 📝 **Đề Tài 7_Nguyễn Trần Diễm Xuân**")
 
 st.title("💰 Ứng Dụng Tính Thuế Thu Nhập Cá Nhân")
-st.write("Cập nhật theo quy định pháp luật thuế hiện hành tại Việt Nam")
+st.write("Cập nhật theo biểu thuế lũy tiến 5 bậc và mức giảm trừ gia cảnh mới nhất năm 2026")
 
 st.markdown("---")
 
@@ -52,25 +52,26 @@ if st.button("🧮 Tính Thuế & Nhận Kết Quả", type="primary"):
     bhtn = gross_salary * 0.01
     total_insurance = bhxh + bhyt + bhtn
     
-    # 2. Giảm trừ gia cảnh
-    self_reduction = 11000000  # Giảm trừ bản thân: 11 triệu
-    dependent_reduction = dependents * 4400000  # Giảm trừ người phụ thuộc: 4.4 triệu/người
+    # 2. Giảm trừ gia cảnh (Theo quy định mới)
+    self_reduction = 15500000  # Giảm trừ bản thân: 15.5 triệu
+    dependent_reduction = dependents * 6200000  # Giảm trừ người phụ thuộc: 6.2 triệu/người
     total_reduction = self_reduction + dependent_reduction
     
     # 3. Tính thu nhập chịu thuế và thu nhập tính thuế
+    # Thu nhập chịu thuế = Tổng thu nhập - Khoản miễn thuế (tăng ca)
     taxable_income = max(0, gross_salary - overtime_pay)
+    
+    # Thu nhập tính thuế = Thu nhập chịu thuế - Bảo hiểm bắt buộc - Các khoản giảm trừ
     assessable_income = max(0, taxable_income - total_insurance - total_reduction)
     
-    # 4. Tính toán thuế lũy tiến từng phần theo 7 bậc quy định tại VN
+    # 4. Tính toán thuế lũy tiến từng phần theo BIỂU THUẾ 5 BẬC MỚI (Áp dụng từ năm 2026)
     tax = 0
     brackets = [
-        {"limit": 5000000, "rate": 0.05, "desc": "Bậc 1: Đến 5 triệu đồng (5%)"},
-        {"limit": 10000000, "rate": 0.10, "desc": "Bậc 2: Trên 5 đến 10 triệu đồng (10%)"},
-        {"limit": 18000000, "rate": 0.15, "desc": "Bậc 3: Trên 10 đến 18 triệu đồng (15%)"},
-        {"limit": 32000000, "rate": 0.20, "desc": "Bậc 4: Trên 18 đến 32 triệu đồng (20%)"},
-        {"limit": 52000000, "rate": 0.25, "desc": "Bậc 5: Trên 32 đến 52 triệu đồng (25%)"},
-        {"limit": 80000000, "rate": 0.30, "desc": "Bậc 6: Trên 52 đến 80 triệu đồng (30%)"},
-        {"limit": float('inf'), "rate": 0.35, "desc": "Bậc 7: Trên 80 triệu đồng (35%)"}
+        {"limit": 10000000, "rate": 0.05, "desc": "Bậc 1: Đến 10 triệu đồng (5%)"},
+        {"limit": 30000000, "rate": 0.10, "desc": "Bậc 2: Trên 10 đến 30 triệu đồng (10%)"},
+        {"limit": 60000000, "rate": 0.20, "desc": "Bậc 3: Trên 30 đến 60 triệu đồng (20%)"},
+        {"limit": 100000000, "rate": 0.30, "desc": "Bậc 4: Trên 60 đến 100 triệu đồng (30%)"},
+        {"limit": float('inf'), "rate": 0.35, "desc": "Bậc 5: Trên 100 triệu đồng (35%)"}
     ]
     
     temp_income = assessable_income
@@ -104,27 +105,31 @@ if st.button("🧮 Tính Thuế & Nhận Kết Quả", type="primary"):
     col1, col2 = st.columns(2)
     with col1:
         st.metric(label="Tổng các khoản bảo hiểm trừ vào lương (10.5%)", value=f"{total_insurance:,.0f} VND")
-        st.metric(label="Thuế TNCN bạn phải nộp", value=f"{tax:,.0f} VND")
+        st.metric(label="Thuế TNCN bạn phải nộp (Biểu thuế 2026)", value=f"{tax:,.0f} VND")
     with col2:
-        st.metric(label="LƯƠNG NET THỰC NHẬN", value=f"{net_salary:,.0f} VND", delta_color="inverse")
+        st.metric(label="LƯƠNG NET THỰC NHẬN", value=f"{net_salary:,.0f} VND")
 
     st.markdown("---")
-    st.subheader("📜 Giải Trình Chi Tiết Theo Luật Việt Nam")
+    st.subheader("📜 Giải Trình Chi Tiết Theo Luật Việt Nam (Năm 2026)")
     
     st.markdown(f"""
-    * **Phí Bảo hiểm bắt buộc (trừ từ lương người lao động):**
+    * **Công thức cốt lõi:** * *Thu nhập tính thuế = Tổng thu nhập - Các khoản miễn thuế - Các khoản giảm trừ*
+        * *Thuế TNCN phải nộp = Thu nhập tính thuế × Thuế suất từng bậc*
+    * **Phí Bảo hiểm bắt buộc:**
         * Bảo hiểm xã hội (8%): `{bhxh:,.0f} VND`
         * Bảo hiểm y tế (1.5%): `{bhyt:,.0f} VND`
         * Bảo hiểm thất nghiệp (1%): `{bhtn:,.0f} VND`
+        * **Tổng cộng bảo hiểm được trừ:** `{total_insurance:,.0f} VND`
     * **Các khoản giảm trừ gia cảnh:**
-        * Giảm trừ cá nhân bản thân: `11,000,000 VND`
-        * Giảm trừ người phụ thuộc: `{dependent_reduction:,.0f} VND` (cho {dependents} người bạn nuôi dưỡng)
+        * Giảm trừ cá nhân bản thân: `15,500,000 VND`
+        * Giảm trừ người phụ thuộc: `{dependent_reduction:,.0f} VND` (cho {dependents} người nuôi dưỡng - Mức `6,200,000 VND`/người)
+        * **Tổng cộng giảm trừ gia cảnh:** `{total_reduction:,.0f} VND`
     * **Phần tăng ca miễn thuế:** `{overtime_pay:,.0f} VND` (Không tính vào thu nhập chịu thuế)
-    * **Thu nhập tính thuế cuối cùng:** `{assessable_income:,.0f} VND` *(Đây là số tiền đem đi áp vào bảng bậc thuế lũy tiến)*
+    * **Thu nhập tính thuế cuối cùng:** `{assessable_income:,.0f} VND` *(Số tiền này sẽ được áp vào biểu lũy tiến 5 bậc mới)*
     """)
     
     if tax > 0:
-        st.write("📊 **Chi tiết phân tách số tiền nộp theo từng bậc thuế:**")
+        st.write("📊 **Chi tiết phân tách số tiền nộp theo biểu thuế 5 bậc mới:**")
         st.table(tax_breakdown)
     else:
-        st.success("Thật tuyệt! Thu nhập tính thuế của bạn bằng 0 nên bạn chưa phải nộp thuế TNCN.")
+        st.success("Thật tuyệt! Thu nhập tính thuế của bạn chưa vượt qua mức giảm trừ nên bạn không phải nộp thuế TNCN.")
