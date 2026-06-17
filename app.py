@@ -1,44 +1,52 @@
 import streamlit as st
 
 # Cấu hình trang web của ứng dụng
-st.set_page_config(page_title="Tính Thuế TNCN Việt Nam", page_icon="💰", layout="centered")
+st.set_page_config(page_title="App Tính Thuế TNCN Việt Nam", page_icon="💰", layout="centered")
 
 # --- THÔNG TIN THÀNH VIÊN VÀ ĐỀ TÀI ---
 st.markdown("### 📝 **Đề Tài 7_Nguyễn Trần Diễm Xuân**")
 
 st.title("💰 Ứng Dụng Tính Thuế Thu Nhập Cá Nhân")
-st.write("Cập nhật theo biểu thuế lũy tiến 5 bậc và mức giảm trừ gia cảnh mới nhất năm 2026")
+st.write("Cập nhật đầy đủ Lương, Thưởng, Tăng ca, Phụ cấp theo luật thuế mới nhất năm 2026")
 
 st.markdown("---")
 
 # --- PHẦN NHẬP DỮ LIỆU ĐẦU VÀO (TIẾNG VIỆT) ---
-st.subheader("📋 Nhập thông tin thu nhập của bạn")
+st.subheader("📋 Nhập thông tin thu nhập tháng này của bạn")
 
-# 1. Nhập mức lương tổng
+# 1. Nhập mức lương chính
 gross_salary = st.number_input(
-    "Mức lương Tổng (Gross) của bạn trong tháng (VND):", 
-    min_value=0, 
-    value=20000000, 
-    step=500000,
-    format="%d"
+    "1. Lương chính / Lương Gross (VND):", 
+    min_value=0, value=30000000, step=500000, format="%d",
+    help="Mức lương căn cứ để đóng bảo hiểm bắt buộc."
 )
 
-# 2. Nhập số người phụ thuộc
-dependents = st.number_input(
-    "Số người phụ thuộc bạn đang nuôi dưỡng (người):", 
-    min_value=0, 
-    value=0, 
-    step=1
+# 2. Nhập tiền thưởng
+bonus_pay = st.number_input(
+    "2. Tiền thưởng / Bonus (VND):", 
+    min_value=0, value=0, step=500000, format="%d",
+    help="Tiền thưởng hiệu suất, thưởng doanh số, thưởng lễ tết... (Khoản này tính thuế 100%)."
 )
 
 # 3. Nhập tiền tăng ca
 overtime_pay = st.number_input(
-    "Tiền lương làm thêm giờ / tăng ca (VND):", 
-    min_value=0, 
-    value=0, 
-    step=500000,
-    format="%d",
-    help="Theo luật VN, phần thu nhập cao hơn do làm đêm, làm thêm giờ được miễn thuế TNCN."
+    "3. Tiền lương tăng ca / làm thêm giờ (VND):", 
+    min_value=0, value=0, step=500000, format="%d",
+    help="Khoản tiền nhận được do làm thêm giờ (được miễn thuế TNCN)."
+)
+
+# 4. Các khoản phụ cấp phổ biến tại công ty
+st.markdown("**4. Các khoản phụ cấp nhận bằng tiền mặt:**")
+col_sub1, col_sub2 = st.columns(2)
+with col_sub1:
+    lunch_allowance = st.number_input("Phụ cấp ăn trưa (VND):", min_value=0, value=730000, step=50000)
+with col_sub2:
+    other_allowance = st.number_input("Phụ cấp điện thoại, xăng xe (VND):", min_value=0, value=500000, step=50000)
+
+# 5. Nhập số người phụ thuộc
+dependents = st.number_input(
+    "5. Số người phụ thuộc bạn đang nuôi dưỡng (người):", 
+    min_value=0, value=1, step=1
 )
 
 st.markdown("---")
@@ -46,25 +54,33 @@ st.markdown("---")
 # --- PHẦN LOGIC TÍNH TOÁN ---
 if st.button("🧮 Tính Thuế & Nhận Kết Quả", type="primary"):
     
-    # 1. Tính các khoản bảo hiểm bắt buộc (Tổng cộng 10.5% vào lương người lao động)
+    # Tổng thu nhập thực tế nhận từ công ty
+    total_income = gross_salary + bonus_pay + overtime_pay + lunch_allowance + other_allowance
+    
+    # 1. Bảo hiểm bắt buộc (Tính trên Lương chính - 10.5%)
     bhxh = gross_salary * 0.08
     bhyt = gross_salary * 0.015
     bhtn = gross_salary * 0.01
     total_insurance = bhxh + bhyt + bhtn
     
-    # 2. Giảm trừ gia cảnh (Theo quy định mới)
-    self_reduction = 15500000  # Giảm trừ bản thân: 15.5 triệu
-    dependent_reduction = dependents * 6200000  # Giảm trừ người phụ thuộc: 6.2 triệu/người
+    # 2. Giảm trừ gia cảnh luật 2026
+    self_reduction = 15500000  
+    dependent_reduction = dependents * 6200000  
     total_reduction = self_reduction + dependent_reduction
     
-    # 3. Tính thu nhập chịu thuế và thu nhập tính thuế
-    # Thu nhập chịu thuế = Tổng thu nhập - Khoản miễn thuế (tăng ca)
-    taxable_income = max(0, gross_salary - overtime_pay)
+    # 3. Xử lý các khoản thu nhập được MIỄN THUẾ
+    # Tiền ăn trưa miễn tối đa 730k
+    exempt_lunch = min(lunch_allowance, 730000)
+    # Tiền điện thoại/xăng xe phục vụ công việc tạm tính miễn thuế theo quy chế
+    exempt_allowance = other_allowance 
+    # Tổng các khoản được miễn thuế (bao gồm cả tăng ca)
+    total_exempt_income = overtime_pay + exempt_lunch + exempt_allowance
     
-    # Thu nhập tính thuế = Thu nhập chịu thuế - Bảo hiểm bắt buộc - Các khoản giảm trừ
-    assessable_income = max(0, taxable_income - total_insurance - total_reduction)
+    # 4. Tính thu nhập tính thuế
+    # Thu nhập tính thuế = Tổng thu nhập - Thu nhập miễn thuế - Bảo hiểm - Giảm trừ gia cảnh
+    assessable_income = max(0, total_income - total_exempt_income - total_insurance - total_reduction)
     
-    # 4. Tính toán thuế lũy tiến từng phần theo BIỂU THUẾ 5 BẬC MỚI (Áp dụng từ năm 2026)
+    # 5. Tính toán thuế lũy tiến 5 bậc năm 2026
     tax = 0
     brackets = [
         {"limit": 10000000, "rate": 0.05, "desc": "Bậc 1: Đến 10 triệu đồng (5%)"},
@@ -96,40 +112,40 @@ if st.button("🧮 Tính Thuế & Nhận Kết Quả", type="primary"):
         else:
             break
 
-    # 5. Lương NET thực nhận
-    net_salary = gross_salary - total_insurance - tax
+    # 6. Lương NET thực nhận cuối cùng mang về nhà
+    net_salary = total_income - total_insurance - tax
 
     # --- PHẦN HIỂN THỊ KẾT QUẢ ---
     st.subheader("🎯 Kết Quả Tính Toán Tóm Tắt")
     
     col1, col2 = st.columns(2)
     with col1:
-        st.metric(label="Tổng các khoản bảo hiểm trừ vào lương (10.5%)", value=f"{total_insurance:,.0f} VND")
-        st.metric(label="Thuế TNCN bạn phải nộp (Biểu thuế 2026)", value=f"{tax:,.0f} VND")
+        st.metric(label="Tổng thu nhập nhận được (Gross + Thưởng + Phụ cấp)", value=f"{total_income:,.0f} VND")
+        st.metric(label="Tổng bảo hiểm bắt buộc trừ vào lương (10.5%)", value=f"{total_insurance:,.0f} VND")
     with col2:
-        st.metric(label="LƯƠNG NET THỰC NHẬN", value=f"{net_salary:,.0f} VND")
+        st.metric(label="Thuế TNCN phải nộp", value=f"{tax:,.0f} VND")
+        st.metric(label="THỰC NHẬN VỀ TAY (NET)", value=f"{net_salary:,.0f} VND")
 
     st.markdown("---")
-    st.subheader("📜 Giải Trình Chi Tiết Theo Luật Việt Nam (Năm 2026)")
+    st.subheader("📜 Giải Trình Chi Tiết Quy Trình Khấu Trừ (Năm 2026)")
     
     st.markdown(f"""
-    * **Công thức cốt lõi:** * *Thu nhập tính thuế = Tổng thu nhập - Các khoản miễn thuế - Các khoản giảm trừ*
-        * *Thuế TNCN phải nộp = Thu nhập tính thuế × Thuế suất từng bậc*
-    * **Phí Bảo hiểm bắt buộc:**
-        * Bảo hiểm xã hội (8%): `{bhxh:,.0f} VND`
-        * Bảo hiểm y tế (1.5%): `{bhyt:,.0f} VND`
-        * Bảo hiểm thất nghiệp (1%): `{bhtn:,.0f} VND`
-        * **Tổng cộng bảo hiểm được trừ:** `{total_insurance:,.0f} VND`
-    * **Các khoản giảm trừ gia cảnh:**
-        * Giảm trừ cá nhân bản thân: `15,500,000 VND`
-        * Giảm trừ người phụ thuộc: `{dependent_reduction:,.0f} VND` (cho {dependents} người nuôi dưỡng - Mức `6,200,000 VND`/người)
-        * **Tổng cộng giảm trừ gia cảnh:** `{total_reduction:,.0f} VND`
-    * **Phần tăng ca miễn thuế:** `{overtime_pay:,.0f} VND` (Không tính vào thu nhập chịu thuế)
-    * **Thu nhập tính thuế cuối cùng:** `{assessable_income:,.0f} VND` *(Số tiền này sẽ được áp vào biểu lũy tiến 5 bậc mới)*
+    * **Tổng thu nhập phát sinh trong tháng:** `{total_income:,.0f} VND`
+    * **Các khoản được miễn trừ thuế:**
+        * Tiền lương tăng ca: `{overtime_pay:,.0f} VND`
+        * Tiền ăn trưa được miễn (Tối đa 730k): `{exempt_lunch:,.0f} VND`
+        * Phụ cấp công việc (xăng xe, điện thoại): `{exempt_allowance:,.0f} VND`
+    * **Các khoản phí bảo hiểm bắt buộc trích từ lương chính:**
+        * BHXH (8%): `{bhxh:,.0f} VND` | BHYT (1.5%): `{bhyt:,.0f} VND` | BHTN (1%): `{bhtn:,.0f} VND`
+        * **Tổng phí bảo hiểm:** `{total_insurance:,.0f} VND`
+    * **Giảm trừ gia cảnh công thần:**
+        * Giảm trừ bản thân người nộp: `15,500,000 VND`
+        * Giảm trừ người phụ thuộc: `{dependent_reduction:,.0f} VND` (cho {dependents} người)
+    * **Thu nhập tính thuế (đưa vào bảng lũy tiến):** `{assessable_income:,.0f} VND`
     """)
     
     if tax > 0:
-        st.write("📊 **Chi tiết phân tách số tiền nộp theo biểu thuế 5 bậc mới:**")
+        st.write("📊 **Chi tiết phân tách số tiền nộp theo biểu thuế 5 bậc mới (2026):**")
         st.table(tax_breakdown)
     else:
-        st.success("Thật tuyệt! Thu nhập tính thuế của bạn chưa vượt qua mức giảm trừ nên bạn không phải nộp thuế TNCN.")
+        st.success("Tuyệt vời! Sau khi trừ các khoản phụ cấp miễn thuế và giảm trừ gia cảnh, bạn không cần phải nộp thuế TNCN trong tháng này.")
