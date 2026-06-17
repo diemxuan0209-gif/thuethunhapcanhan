@@ -10,7 +10,7 @@ st.image("logo.jpg")
 st.markdown("### 📝 **Đề Tài 7_Nguyễn Trần Diễm Xuân**")
 
 st.title("💰 Ứng Dụng Tính Thuế Thu Nhập Cá Nhân")
-st.write("Tự động tính toán theo biểu thuế 5 bậc và mức giảm trừ gia cảnh mới nhất năm 2026")
+st.write("Cập nhật đầy đủ Lương, Thưởng, Tăng ca, Phụ cấp theo luật thuế mới nhất năm 2026")
 
 st.markdown("---")
 
@@ -46,96 +46,39 @@ dependents = st.number_input(
 
 st.markdown("---")
 
-# --- PHẦN LOGIC TÍNH TOÁN (TỰ ĐỘNG CHẠY, KHÔNG CẦN NÚT BẤM) ---
-
-# Tổng thu nhập thực tế nhận từ công ty
-total_income = gross_salary + bonus_pay + overtime_pay + lunch_allowance + other_allowance
-
-# 1. Bảo hiểm bắt buộc (Tính trên Lương chính - 10.5%)
-bhxh = gross_salary * 0.08
-bhyt = gross_salary * 0.015
-bhtn = gross_salary * 0.01
-total_insurance = bhxh + bhyt + bhtn
-
-# 2. Giảm trừ gia cảnh luật mới 2026
-self_reduction = 15500000  
-dependent_reduction = dependents * 6200000  
-total_reduction = self_reduction + dependent_reduction
-
-# 3. Xử lý các khoản thu nhập được MIỄN THUẾ
-exempt_lunch = min(lunch_allowance, 730000)
-exempt_allowance = other_allowance 
-total_exempt_income = overtime_pay + exempt_lunch + exempt_allowance
-
-# 4. Tính thu nhập tính thuế
-assessable_income = max(0, total_income - total_exempt_income - total_insurance - total_reduction)
-
-# 5. Tính toán thuế lũy tiến 5 bậc năm 2026
-tax = 0
-brackets = [
-    {"limit": 10000000, "rate": 0.05, "desc": "Bậc 1: Đến 10 triệu đồng (5%)"},
-    {"limit": 30000000, "rate": 0.10, "desc": "Bậc 2: Trên 10 đến 30 triệu đồng (10%)"},
-    {"limit": 60000000, "rate": 0.20, "desc": "Bậc 3: Trên 30 đến 60 triệu đồng (20%)"},
-    {"limit": 100000000, "rate": 0.30, "desc": "Bậc 4: Trên 60 đến 100 triệu đồng (30%)"},
-    {"limit": float('inf'), "rate": 0.35, "desc": "Bậc 5: Trên 100 triệu đồng (35%)"}
-]
-
-temp_income = assessable_income
-previous_limit = 0
-tax_breakdown = []
-
-for b in brackets:
-    range_size = b["limit"] - previous_limit
-    if temp_income > 0:
-        taxable_in_bracket = min(temp_income, range_size)
-        tax_in_bracket = taxable_in_bracket * b["rate"]
-        tax += tax_in_bracket
-        
-        tax_breakdown.append({
-            "Bậc thuế": b["desc"],
-            "Thu nhập tính thuế ở bậc này": f"{taxable_in_bracket:,.0f} VND",
-            "Tiền thuế phải nộp": f"{tax_in_bracket:,.0f} VND"
-        })
-        
-        temp_income -= taxable_in_bracket
-        previous_limit = b["limit"]
-    else:
-        break
-
-# 6. Lương NET thực nhận cuối cùng mang về nhà
-net_salary = total_income - total_insurance - tax
-
-# --- PHẦN HIỂN THỊ KẾT QUẢ KHI CÓ THAY ĐỔI SỐ LIỆU ---
-st.subheader("🎯 Kết Quả Tính Toán Tóm Tắt")
-
-col1, col2 = st.columns(2)
-with col1:
-    st.metric(label="Tổng thu nhập nhận được (Gross + Thưởng + Phụ cấp)", value=f"{total_income:,.0f} VND")
-    st.metric(label="Tổng bảo hiểm bắt buộc trừ vào lương (10.5%)", value=f"{total_insurance:,.0f} VND")
-with col2:
-    st.metric(label="Thuế TNCN phải nộp", value=f"{tax:,.0f} VND")
-    st.metric(label="THỰC NHẬN VỀ TAY (NET)", value=f"{net_salary:,.0f} VND")
-
-st.markdown("---")
-st.subheader("📜 Giải Trình Chi Tiết Quy Trình Khấu Trừ (Năm 2026)")
-
-st.markdown(f"""
-* **Tổng thu nhập phát sinh trong tháng:** `{total_income:,.0f} VND`
-* **Các khoản được miễn trừ thuế:**
-    * Tiền lương tăng ca: `{overtime_pay:,.0f} VND`
-    * Tiền ăn trưa được miễn (Tối đa 730k): `{exempt_lunch:,.0f} VND`
-    * Phụ cấp công việc (xăng xe, điện thoại): `{exempt_allowance:,.0f} VND`
-* **Các khoản phí bảo hiểm bắt buộc trích từ lương chính:**
-    * BHXH (8%): `{bhxh:,.0f} VND` | BHYT (1.5%): `{bhyt:,.0f} VND` | BHTN (1%): `{bhtn:,.0f} VND`
-    * **Tổng phí bảo hiểm:** `{total_insurance:,.0f} VND`
-* **Giảm trừ gia cảnh:**
-    * Giảm trừ bản thân người nộp: `15,500,000 VND`
-    * Giảm trừ người phụ thuộc: `{dependent_reduction:,.0f} VND` (cho {dependents} người)
-* **Thu nhập tính thuế (đưa vào bảng lũy tiến):** `{assessable_income:,.0f} VND`
-""")
-
-if tax > 0:
-    st.write("📊 **Chi tiết phân tách số tiền nộp theo biểu thuế 5 bậc mới (2026):**")
-    st.table(tax_breakdown)
-else:
-    st.success("Tuyệt vời! Sau khi trừ các khoản phụ cấp miễn thuế và giảm trừ gia cảnh, thu nhập tính thuế của bạn bằng 0 nên không cần phải nộp thuế TNCN.")
+# --- PHẦN NÚT BẤM KÍCH HOẠT TÍNH TOÁN ---
+if st.button("🧮 Tính Thuế & Nhận Kết Quả", type="primary"):
+    
+    # 1. Tính tổng thu nhập thực tế
+    total_income = gross_salary + bonus_pay + overtime_pay + lunch_allowance + other_allowance
+    
+    # 2. Bảo hiểm bắt buộc (10.5%)
+    bhxh = gross_salary * 0.08
+    bhyt = gross_salary * 0.015
+    bhtn = gross_salary * 0.01
+    total_insurance = bhxh + bhyt + bhtn
+    
+    # 3. Giảm trừ gia cảnh luật mới 2026
+    self_reduction = 15500000  
+    dependent_reduction = dependents * 6200000  
+    total_reduction = self_reduction + dependent_reduction
+    
+    # 4. Thu nhập được miễn thuế
+    exempt_lunch = min(lunch_allowance, 730000)
+    exempt_allowance = other_allowance 
+    total_exempt_income = overtime_pay + exempt_lunch + exempt_allowance
+    
+    # 5. Tính thu nhập tính thuế cuối cùng
+    assessable_income = max(0, total_income - total_exempt_income - total_insurance - total_reduction)
+    
+    # 6. Thuật toán bảng lũy tiến 5 bậc năm 2026
+    tax = 0
+    brackets = [
+        {"limit": 10000000, "rate": 0.05, "desc": "Bậc 1: Đến 10 triệu đồng (5%)"},
+        {"limit": 30000000, "rate": 0.10, "desc": "Bậc 2: Trên 10 đến 30 triệu đồng (10%)"},
+        {"limit": 60000000, "rate": 0.20, "desc": "Bậc 3: Trên 30 đến 60 triệu đồng (20%)"},
+        {"limit": 100000000, "rate": 0.30, "desc": "Bậc 4: Trên 60 đến 100 triệu đồng (30%)"},
+        {"limit": float('inf'), "rate": 0.35, "desc": "Bậc 5: Trên 100 triệu đồng (35%)"}
+    ]
+    
+    temp_income = assessable_income
