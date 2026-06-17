@@ -14,10 +14,9 @@ st.write("Cập nhật đầy đủ Lương, Thưởng, Tăng ca, Phụ cấp th
 
 st.markdown("---")
 
-# --- PHẦN NHẬP DỮ LIỆU ĐẦU VÀO (THEO YÊU CẦU CỦA THẦY) ---
+# --- PHẦN NHẬP DỮ LIỆU ĐẦU VÀO ---
 st.subheader("📋 Nhập thông tin thu nhập tháng này của bạn")
 
-# 1. Đổi tên hiển thị theo ý Thầy Bình
 gross_salary = st.number_input(
     "1. Lương đóng BHXH (VND):", 
     min_value=0, value=30000000, step=500000, format="%d"
@@ -36,10 +35,9 @@ overtime_pay = st.number_input(
 st.markdown("**4. Các khoản phụ cấp nhận bằng tiền mặt:**")
 col_sub1, col_sub2 = st.columns(2)
 with col_sub1:
-    # Đổi giá trị mặc định (value) về 0 theo ý Thầy Bình
+    # Đã bỏ ghi chú tối đa
     lunch_allowance = st.number_input("Phụ cấp ăn trưa (VND):", min_value=0, value=0, step=50000)
 with col_sub2:
-    # Đổi giá trị mặc định (value) về 0 theo ý Thầy Bình
     other_allowance = st.number_input("Phụ cấp điện thoại, xăng xe (VND):", min_value=0, value=0, step=50000)
 
 dependents = st.number_input(
@@ -51,29 +49,23 @@ st.markdown("---")
 
 # --- HÀM LOGIC TÍNH TOÁN AN TOÀN ---
 def tinh_thue_tncn(gross, bonus, overtime, lunch, other, deps):
-    # Tổng thu nhập thực tế
     total_income = gross + bonus + overtime + lunch + other
     
-    # Bảo hiểm bắt buộc (10.5% tính trên Lương đóng BHXH)
     bhxh = gross * 0.08
     bhyt = gross * 0.015
     bhtn = gross * 0.01
     total_insurance = bhxh + bhyt + bhtn
     
-    # Giảm trừ gia cảnh luật mới 2026
     self_reduction = 15500000  
     dependent_reduction = deps * 6200000  
     total_reduction = self_reduction + dependent_reduction
     
-    # Thu nhập được miễn thuế
     exempt_lunch = min(lunch, 730000)
     exempt_allowance = other 
     total_exempt_income = overtime + exempt_lunch + exempt_allowance
     
-    # Tính thu nhập tính thuế cuối cùng
     assessable_income = max(0, total_income - total_exempt_income - total_insurance - total_reduction)
     
-    # Biểu thuế lũy tiến 5 bậc năm 2026
     tax = 0
     brackets = [
         {"limit": 10000000, "rate": 0.05, "desc": "Bậc 1: Đến 10 triệu đồng (5%)"},
@@ -137,7 +129,7 @@ if st.button("🧮 Tính Thuế & Nhận Kết Quả", type="primary"):
     * **Tổng thu nhập phát sinh trong tháng:** `{res['total_income']:,.0f} VND`
     * **Các khoản được miễn trừ thuế:**
         * Tiền lương tăng ca: `{overtime_pay:,.0f} VND`
-        * Tiền ăn trưa được miễn (Tối đa 730k): `{res['exempt_lunch']:,.0f} VND`
+        * Tiền ăn trưa được miễn: `{res['exempt_lunch']:,.0f} VND`
         * Phụ cấp công việc (xăng xe, điện thoại): `{res['exempt_allowance']:,.0f} VND`
     * **Các khoản phí bảo hiểm bắt buộc trích từ lương chính:**
         * BHXH (8%): `{res['bhxh']:,.0f} VND` | BHYT (1.5%): `{res['bhyt']:,.0f} VND` | BHTN (1%): `{res['bhtn']:,.0f} VND`
